@@ -24,8 +24,6 @@ class Seller(db_conn.DBConn):
 
             book_info = json.loads(book_json_str)
             tokenizer = Tokenizer()
-            #self.conn.execute("INSERT into new_store(store_id, book_id, book_info, stock_level, price)"
-            #                  "VALUES (?, ?, ?, ?, ?)", (store_id, book_id, book_json_str, stock_level, book_info.get("price")))
             store = Store_table(store_id = store_id, book_id = book_id, book_info = book_json_str, stock_level = stock_level, price = book_info.get("price"))
             session.add(store)
             session.commit()
@@ -68,8 +66,6 @@ class Seller(db_conn.DBConn):
             for c in ctx:
                 invert_index = Invert_index(search_key = c["key_ctx"], store_id = c["store_id"], book_id = c["book_id"])
                 session.add(invert_index)
-                #self.conn.execute("INSERT into invert_index(search_key, book_id, book_title, book_author)"
-                #                  "VALUES (?, ?, ?, ?)", (c["key_ctx"], book_id, book_info.get("title"), book_info.get("author")))
 
             session.commit()
         except SQLAlchemyError as e:
@@ -91,8 +87,6 @@ class Seller(db_conn.DBConn):
             if not self.book_id_exist(store_id, book_id):
                 return error.error_non_exist_book_id(book_id)
 
-            #self.conn.execute("UPDATE new_store SET stock_level = stock_level + ? "
-            #                  "WHERE store_id = ? AND book_id = ?", (add_stock_level, store_id, book_id))
             session.query(Store_table).filter(Store_table.store_id == store_id, Store_table.book_id == book_id).update({"stock_level": Store_table.stock_level + add_stock_level})
             session.commit()
         except SQLAlchemyError as e:
@@ -109,8 +103,6 @@ class Seller(db_conn.DBConn):
                 return error.error_non_exist_user_id(user_id)
             if self.store_id_exist(store_id):
                 return error.error_exist_store_id(store_id)
-            #self.conn.execute("INSERT into user_store(store_id, user_id)"
-            #                  "VALUES (?, ?)", (store_id, user_id))
             user_store = User_store(user_id = user_id, store_id = store_id)
             session.add(user_store)
             session.commit()
@@ -129,20 +121,13 @@ class Seller(db_conn.DBConn):
                 return error.error_non_exist_store_id(store_id)
             if not self.order_id_exist(order_id):
                 return error.error_non_exist_order_id(order_id)
-            #cursor = self.conn.execute(
-            #    "SELECT status FROM new_order WHERE order_id = '%s';" % order_id
-            #)
             row = session.query(New_order).filter(New_order.order_id == order_id).all()
-            #row = cursor.fetchone()
             if len(row) == 0:
                 return error.error_non_exist_order_id(order_id)
             status = row[0].status
             if status != 2:
                 return error.error_invalid_order_status(order_id)
             session.query(New_order).filter(New_order.order_id == order_id).update({"status": 3})
-            #self.conn.execute(
-            #    "UPDATE new_order set status = 3 WHERE order_id = '%s';" % order_id
-            #)
 
             session.commit()
         except SQLAlchemyError as e:

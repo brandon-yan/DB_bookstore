@@ -58,10 +58,6 @@ class User(db_conn.DBConn):
         try:
             terminal = "terminal_{}".format(str(time.time()))
             token = jwt_encode(user_id, terminal)
-            #self.conn.execute(
-            #    "INSERT into user(user_id, password, balance, token, terminal) "
-            #    "VALUES (?, ?, ?, ?, ?);",
-            #    (user_id, password, 0, token, terminal), )
             new_user = User_table(user_id = user_id, password = password, balance = 0, token = token, terminal = terminal)
             self.conn.add(new_user)
             self.conn.commit()
@@ -73,8 +69,6 @@ class User(db_conn.DBConn):
         return 200, "ok"
 
     def check_token(self, user_id: str, token: str) -> (int, str):
-        #cursor = self.conn.execute("SELECT token from user where user_id=?", (user_id,))
-        #row = cursor.fetchone()
         row = self.conn.query(User_table).filter(User_table.user_id == user_id).all()
         if len(row) == 0:
             return error.error_authorization_fail()
@@ -84,8 +78,6 @@ class User(db_conn.DBConn):
         return 200, "ok"
 
     def check_password(self, user_id: str, password: str) -> (int, str):
-        #cursor = self.conn.execute("SELECT password from user where user_id=?", (user_id,))
-        #row = cursor.fetchone()
         row = self.conn.query(User_table).filter(User_table.user_id == user_id).all()
         if len(row) == 0:
             return error.error_authorization_fail()
@@ -102,12 +94,9 @@ class User(db_conn.DBConn):
                 return code, message, ""
 
             token = jwt_encode(user_id, terminal)
-            #cursor = self.conn.execute(
-            #    "UPDATE user set token= ? , terminal = ? where user_id = ?",
-            #    (token, terminal, user_id), )
-            #if cursor.rowcount == 0:
-            #    return error.error_authorization_fail() + ("", )
-            self.conn.query(User_table).filter(User_table.user_id == user_id).update({"token": token, "terminal": terminal})
+            row = self.conn.query(User_table).filter(User_table.user_id == user_id).update({"token": token, "terminal": terminal})
+            if row == 0:
+                return error.error_authorization_fail() + ("",)
             self.conn.commit()
         except SQLAlchemyError as e:
             self.conn.rollback()
@@ -125,12 +114,7 @@ class User(db_conn.DBConn):
             terminal = "terminal_{}".format(str(time.time()))
             dummy_token = jwt_encode(user_id, terminal)
 
-            #cursor = self.conn.execute(
-            #    "UPDATE user SET token = ?, terminal = ? WHERE user_id=?",
-            #    (dummy_token, terminal, user_id), )
-            #if cursor.rowcount == 0:
-            #    return error.error_authorization_fail()
-            self.conn.query(User_table).filter(User_table.user_id == user_id).update({"token": token, "terminal": terminal})
+            self.conn.query(User_table).filter(User_table.user_id == user_id).update({"token": dummy_token, "terminal": terminal})
             self.conn.commit()
         except SQLAlchemyError as e:
             self.conn.rollback()
@@ -145,11 +129,6 @@ class User(db_conn.DBConn):
             if code != 200:
                 return code, message
 
-            #cursor = self.conn.execute("DELETE from user where user_id=?", (user_id,))
-            #if cursor.rowcount == 1:
-            #    self.conn.commit()
-            #else:
-            #    return error.error_authorization_fail()
             self.conn.query(User_table).filter(User_table.user_id == user_id).delete()
             self.conn.commit()
         except SQLAlchemyError as e:
@@ -166,12 +145,9 @@ class User(db_conn.DBConn):
                 return code, message
             terminal = "terminal_{}".format(str(time.time()))
             token = jwt_encode(user_id, terminal)
-            #cursor = self.conn.execute(
-            #    "UPDATE user set password = ?, token= ? , terminal = ? where user_id = ?",
-            #    (new_password, token, terminal, user_id), )
-            #if cursor.rowcount == 0:
-            #    return error.error_authorization_fail()
-            self.conn.query(User_table).filter(User_table.user_id == user_id).update({"password": new_password, "token": token, "terminal": terminal})
+            row = self.conn.query(User_table).filter(User_table.user_id == user_id).update({"password": new_password, "token": token, "terminal": terminal})
+            if row == 0:
+                return error.error_authorization_fail() + ("",)
             self.conn.commit()
         except SQLAlchemyError as e:
             print(e)
